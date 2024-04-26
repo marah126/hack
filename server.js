@@ -4,14 +4,14 @@ const fs = require('fs');
 const app = express();
 const port = 3000;
 
-// Read the Excel file and convert it to JSON
+// Excel file and convert it to JSON
 const filePath = 'AvocadoFoods.xlsx';
 const workbook = xlsx.readFile(filePath);
 const sheetName = workbook.SheetNames[0];
 const worksheet = workbook.Sheets[sheetName];
 const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
 
-// Function to group data according to the first column
+// group data according to the first column
 function groupDataByFirstColumn() {
     const groupedData = {};
     jsonData.slice(1).forEach(row => {
@@ -24,7 +24,7 @@ function groupDataByFirstColumn() {
     return groupedData;
 }
 
-// Function to save data to a new file
+// save data to a new file
 function saveDataToFile(data, fileName) {
     const ws = xlsx.utils.aoa_to_sheet(data);
     const wb = xlsx.utils.book_new();
@@ -32,7 +32,7 @@ function saveDataToFile(data, fileName) {
     xlsx.writeFile(wb, fileName);
 }
 
-// Function to get max 10 according to specific column for each group
+// get max 10 according to specific column for each group
 function getMax10ByColumnForGroup(groupedData, columnName) {
     const result = [];
     for (const groupKey in groupedData) {
@@ -44,7 +44,7 @@ function getMax10ByColumnForGroup(groupedData, columnName) {
     return result;
 }
 
-// Function to get random value from each group
+// get random value from each group
 function getRandomValueFromEachGroup(groupedData) {
     const result = [];
     for (const groupKey in groupedData) {
@@ -54,48 +54,42 @@ function getRandomValueFromEachGroup(groupedData) {
     }
     return result;
 }
-// Function to get max 15 rows from the random values obtained from each group
+// get max 15 rows from the random values obtained from each group
 function getMax15FromRandomValues(randomValues, columnName) {
   const sortedRandomValues = randomValues.sort((a, b) => b[columnName] - a[columnName]);
   return sortedRandomValues.slice(0, 15);
 }
 
-// Define an endpoint to handle the post request
+//  endpoint 
 app.post('/process', express.json(), (req, res) => {
   const columnName = req.body.columnName; // Get column name from request body
   const columnIndex = jsonData[0].indexOf(columnName); // Get column index
 
-  // Group data according to the first column
   const groupedData = groupDataByFirstColumn();
 
-  // Get max 10 rows for each group based on the specified column
   const max10ByColumnForGroup = getMax10ByColumnForGroup(groupedData, columnIndex);
 
-  // Get random value from each group
   const randomValueFromEachGroup = getRandomValueFromEachGroup(groupedData);
 
-  // Get max 15 rows from the random values obtained from each group
+
+
   const max15FromRandomValues = getMax15FromRandomValues(randomValueFromEachGroup, columnIndex);
 
-  // Save max 10 rows for each group to a new file
   saveDataToFile(max10ByColumnForGroup, 'max10ByColumnForGroup.xlsx');
 
-  // Save random value from each group to a new file
   saveDataToFile(randomValueFromEachGroup, 'randomValueFromEachGroup.xlsx');
 
-  // Save max 15 rows from random values to a new file
   saveDataToFile(max15FromRandomValues, 'max15FromRandomValues.xlsx');
 
   // Send the final response
   res.json({
-      max10ByColumnForGroup: max10ByColumnForGroup,
-      randomValueFromEachGroup: randomValueFromEachGroup,
-      max15FromRandomValues: max15FromRandomValues,
+      // max10ByColumnForGroup: max10ByColumnForGroup,
+      // randomValueFromEachGroup: randomValueFromEachGroup,
+      max15FromRandomValues: max15FromRandomValues.map(row => [row[0], row[1]]), 
       columnUsed: columnName
   });
 });
 
-// Start the server
 app.listen(port, () => {
     console.log(`Server is listening on port ${port}`);
 });
